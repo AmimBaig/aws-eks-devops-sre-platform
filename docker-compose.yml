@@ -1,8 +1,7 @@
 services:
 
   order-api:
-    build:
-      context: ./applications/order-api
+    image: order-api:1.1.0
     container_name: order-api
     ports:
       - "8000:8000"
@@ -12,8 +11,7 @@ services:
       - inventory-api
 
   inventory-api:
-    build:
-      context: ./applications/inventory-api
+    image: inventory-api:1.0.0
     container_name: inventory-api
     ports:
       - "8001:8000"
