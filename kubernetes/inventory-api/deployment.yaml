@@ -37,10 +37,15 @@ spec:
 
           env:
             - name: REDIS_HOST
-              value: "redis"
-
+              valueFrom:
+                configMapKeyRef:
+                  name: inventory-api-config
+                  key: REDIS_HOST
             - name: REDIS_PORT
-              value: "6379"
+              valueFrom:
+                configMapKeyRef:
+                  name: inventory-api-config
+                  key: REDIS_PORT
 
           readinessProbe:
             httpGet:

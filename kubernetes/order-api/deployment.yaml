@@ -37,7 +37,10 @@ spec:
 
           env:
             - name: INVENTORY_API_URL
-              value: "http://inventory-api:8000"
+              valueFrom:
+                configMapKeyRef:
+                  name: order-api-config
+                  key: INVENTORY_API_URL
 
           readinessProbe:
             httpGet:
