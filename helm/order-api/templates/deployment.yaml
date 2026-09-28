@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "order-api.fullname" . }}
+  labels:
+    {{- include "order-api.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "order-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "order-api.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: order-api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+
+          env:
+            - name: INVENTORY_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: order-api-config
+                  key: INVENTORY_API_URL
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000

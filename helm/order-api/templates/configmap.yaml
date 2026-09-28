@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-api-config
+  labels:
+    {{- include "order-api.labels" . | nindent 4 }}
+data:
+  INVENTORY_API_URL: {{ .Values.config.inventoryApiUrl | quote }}
