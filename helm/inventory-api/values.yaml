@@ -1,0 +1,26 @@
+replicaCount: 2
+
+image:
+  repository: inventory-api
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"
+
+config:
+  redisHost: "redis"
+  redisPort: "6379"
+
+autoscaling:
+  enabled: false
