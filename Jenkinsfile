@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -6,31 +7,91 @@ pipeline {
         disableConcurrentBuilds()
     }
 
+    environment {
+        IMAGE_NAME = 'amimbaig/order-api'
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-                echo 'Source code checked out successfully.'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Test') {
             steps {
-                dir('applications/order-api') {
+                sh '''
+                    docker run --rm \
+                      -v "$WORKSPACE/applications/order-api:/app" \
+                      -w /app \
+                      python:3.12-slim \
+                      sh -c "pip install --no-cache-dir -r requirements.txt && python -m pytest tests/ -v"
+                '''
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                sh '''
+                    docker build \
+                      -t ${IMAGE_NAME}:${BUILD_NUMBER} \
+                      -t ${IMAGE_NAME}:latest \
+                      applications/order-api
+                '''
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            steps {
+                sh '''
+                    set -e
+
+                    docker save \
+                      -o "$WORKSPACE/order-api-image.tar" \
+                      ${IMAGE_NAME}:${BUILD_NUMBER}
+
+                    docker run --rm \
+                      --user "$(id -u):$(id -g)" \
+                      -v "$WORKSPACE:/work" \
+                      aquasec/trivy:latest \
+                      image \
+                      --cache-dir /tmp/trivy-cache \
+                      --input /work/order-api-image.tar \
+                      --severity HIGH,CRITICAL \
+                      --format json \
+                      --output /work/trivy-report.json
+
+                    rm -f "$WORKSPACE/order-api-image.tar"
+                '''
+
+                archiveArtifacts(
+                    artifacts: 'trivy-report.json',
+                    fingerprint: true
+                )
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKERHUB_USER',
+                        passwordVariable: 'DOCKERHUB_TOKEN'
+                    )
+                ]) {
                     sh '''
-                        python3 -m venv .venv
-                        .venv/bin/pip install --upgrade pip
-                        .venv/bin/pip install -r requirements.txt
-                        .venv/bin/pip install pytest
-                    '''
-                }
-            }
-        }
+                        set +x
 
-        stage('Run Tests') {
-            steps {
-                dir('applications/order-api') {
-                    sh '.venv/bin/python -m pytest tests/ -v'
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                          --username "$DOCKERHUB_USER" \
+                          --password-stdin
+
+                        docker push ${IMAGE_NAME}:${BUILD_NUMBER}
+                        docker push ${IMAGE_NAME}:latest
+
+                        docker logout
+                    '''
                 }
             }
         }
@@ -38,13 +99,10 @@ pipeline {
 
     post {
         success {
-            echo 'Order API CI pipeline completed successfully!'
+            echo 'Order API CI completed successfully!'
         }
         failure {
-            echo 'Order API CI pipeline failed. Check the console output.'
-        }
-        always {
-            cleanWs()
+            echo 'Order API CI failed. Check the stage logs.'
         }
     }
 }
