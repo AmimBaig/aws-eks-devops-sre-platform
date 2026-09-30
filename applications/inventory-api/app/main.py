@@ -72,24 +72,46 @@ def reserve_inventory(
         )
 
     key = f"inventory:{product_id}"
-    current_quantity = redis_client.get(key)
 
-    if current_quantity is None:
+    reserve_script = """
+    local current = redis.call("GET", KEYS[1])
+
+    if not current then
+        return -1
+    end
+
+    local requested = tonumber(ARGV[1])
+    local available = tonumber(current)
+
+    if available < requested then
+        return -2
+    end
+
+    local remaining = available - requested
+    redis.call("SET", KEYS[1], remaining)
+    return remaining
+    """
+
+    result = redis_client.eval(
+        reserve_script,
+        1,
+        key,
+        reservation.quantity,
+    )
+
+    if result == -1:
         raise HTTPException(
             status_code=404,
             detail="Product not found",
         )
 
-    current_quantity = int(current_quantity)
-
-    if current_quantity < reservation.quantity:
+    if result == -2:
         raise HTTPException(
             status_code=409,
             detail="Insufficient inventory",
         )
 
-    new_quantity = current_quantity - reservation.quantity
-    redis_client.set(key, new_quantity)
+    new_quantity = int(result)
 
     return {
         "product_id": product_id,
