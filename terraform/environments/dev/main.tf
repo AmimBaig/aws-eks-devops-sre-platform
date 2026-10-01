@@ -29,3 +29,8 @@ module "vpc" {
   availability_zones = var.availability_zones
   public_subnets     = var.public_subnets
 }
+
+module "iam" {
+  source = "../../modules/iam"
+  name   = "devops-sre-dev"
+}
