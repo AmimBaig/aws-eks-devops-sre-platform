@@ -34,3 +34,17 @@ module "iam" {
   source = "../../modules/iam"
   name   = "devops-sre-dev"
 }
+
+module "eks" {
+  source = "../../modules/eks"
+
+  cluster_name       = "devops-sre-dev"
+  kubernetes_version = "1.36"
+  cluster_role_arn   = module.iam.cluster_role_arn
+  node_role_arn      = module.iam.node_role_arn
+  subnet_ids         = module.vpc.public_subnet_ids
+  node_instance_type = "t3.small"
+  node_desired_size  = 1
+  node_min_size      = 1
+  node_max_size      = 2
+}
