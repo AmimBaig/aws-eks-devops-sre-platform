@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: inventory-api
+  repository: amimbaig/inventory-api
   tag: "1.0.0"
   pullPolicy: IfNotPresent
 
@@ -19,7 +19,7 @@ resources:
     memory: "256Mi"
 
 config:
-  redisHost: "redis"
+  redisHost: "redis.redis.svc.cluster.local"
   redisPort: "6379"
 
 autoscaling:
