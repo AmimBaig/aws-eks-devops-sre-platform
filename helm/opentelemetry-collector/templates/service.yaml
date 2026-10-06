@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "opentelemetry-collector.fullname" . }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ include "opentelemetry-collector.fullname" . }}
+  ports:
+    - name: otlp-grpc
+      port: {{ .Values.service.otlpGrpcPort }}
+      targetPort: 4317
+    - name: otlp-http
+      port: {{ .Values.service.otlpHttpPort }}
+      targetPort: 4318

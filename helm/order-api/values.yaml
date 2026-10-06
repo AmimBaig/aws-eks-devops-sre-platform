@@ -26,3 +26,8 @@ autoscaling:
 
 config:
   inventoryApiUrl: "http://inventory-api:8000"
+
+otel:
+  exporterOtlpEndpoint: "http://otel-collector-opentelemetry-collector.observability.svc.cluster.local:4317"
+  serviceName: "order-api"
+  environment: "production"

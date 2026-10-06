@@ -3,6 +3,7 @@ import os
 import redis
 from fastapi import FastAPI, HTTPException
 from prometheus_fastapi_instrumentator import Instrumentator
+from app.telemetry import setup_telemetry
 from pydantic import BaseModel
 
 
@@ -129,4 +130,5 @@ def root():
     }
 
 
+setup_telemetry(app)
 Instrumentator().instrument(app).expose(app)

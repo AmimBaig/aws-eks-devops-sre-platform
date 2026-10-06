@@ -33,6 +33,12 @@ spec:
                 configMapKeyRef:
                   name: inventory-api-config
                   key: REDIS_PORT
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.otel.exporterOtlpEndpoint | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.otel.serviceName | quote }}
+            - name: OTEL_ENVIRONMENT
+              value: {{ .Values.otel.environment | quote }}
           readinessProbe:
             httpGet:
               path: /ready

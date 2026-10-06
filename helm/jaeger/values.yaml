@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: jaegertracing/jaeger
+  tag: "2.14.1"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  otlpGrpcPort: 4317
+  otlpHttpPort: 4318
+  queryPort: 16686

@@ -1,0 +1,39 @@
+import os
+
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+
+def setup_telemetry(app):
+    resource = Resource.create(
+        {
+            "service.name": os.getenv("OTEL_SERVICE_NAME", "inventory-api"),
+            "service.version": "1.0.0",
+            "deployment.environment": os.getenv(
+                "OTEL_ENVIRONMENT",
+                "development",
+            ),
+        }
+    )
+
+    provider = TracerProvider(resource=resource)
+    endpoint = os.getenv(
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "http://localhost:4317",
+    )
+
+    provider.add_span_processor(
+        BatchSpanProcessor(
+            OTLPSpanExporter(endpoint=endpoint, insecure=True)
+        )
+    )
+
+    trace.set_tracer_provider(provider)
+
+    FastAPIInstrumentor.instrument_app(app)
+    RedisInstrumentor().instrument()

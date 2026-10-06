@@ -5,6 +5,7 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from prometheus_fastapi_instrumentator import Instrumentator
+from app.telemetry import setup_telemetry
 
 
 app = FastAPI(
@@ -109,4 +110,5 @@ def root():
     }
 
 
+setup_telemetry(app)
 Instrumentator().instrument(app).expose(app)
