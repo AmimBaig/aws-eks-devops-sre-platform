@@ -1,0 +1,38 @@
+serverFiles:
+  alerting_rules.yml:
+    groups:
+      - name: infrastructure-alerts
+        rules:
+          - alert: KubernetesNodeDown
+            expr: up{job="kubernetes-nodes"} == 0
+            for: 3m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Kubernetes node is unreachable"
+              description: "Node {{ $labels.instance }} has been unreachable for 3 minutes."
+
+          - alert: KubernetesNodeHighCPU
+            expr: |
+              100 * (1 - avg by (node) (
+                rate(node_cpu_seconds_total{mode="idle",service="prometheus-prometheus-node-exporter"}[5m])
+              )) > 85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Kubernetes node CPU usage is high"
+              description: "Node {{ $labels.node }} CPU usage exceeded 85% for 5 minutes."
+
+          - alert: KubernetesNodeHighMemory
+            expr: |
+              100 * (
+                1 - node_memory_MemAvailable_bytes{service="prometheus-prometheus-node-exporter"}
+                / node_memory_MemTotal_bytes{service="prometheus-prometheus-node-exporter"}
+              ) > 90
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Kubernetes node memory usage is high"
+              description: "Node {{ $labels.node }} memory usage exceeded 90% for 5 minutes."
